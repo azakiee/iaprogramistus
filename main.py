@@ -1,30 +1,75 @@
-class Student:
-    def __init__(self, name, age, grade, power):
-        self.name = name
-        self.age = age
-        self.grade = grade
-        self.power = power
-
-    def vrezat_vliso(self, other):
-        if self.grade == other.grade:
-            print(f'{other.name}, я тибя бить не буду, мыэ кенты')
-        elif self.name[0] == other.name[0]:
-            print(f'{other.name}, я тибя бить не буду, мыэ кенты')
-        elif self.power >= other.power:
-            print(f'{other.name}, я тибе сейчас набью лицо')
-        elif self.age >= other.age:
-            print(f'{other.name}, я тибе сейчас набью лицо')
-        else:
-            print(f'{other.name}, ты мине сейчас набьёшь лицо')
+import logging
+from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telegram.ext import Updater, CallbackContext, Filters, Dispatcher, MessageHandler, CommandHandler
+from set import TOKEN
 
 
-student1 = Student("Даня", 16, 1, 100)
-student2 = Student("Ваня", 16, 1, 10)
-student3 = Student("Ибрагим", 16, 23, 120)
-student4 = Student("Дамирчик", 16, 42, 50)
-student5 = Student("Инакентий", 20, 42, 101)
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
 
-student1.vrezat_vliso(student2)
-student1.vrezat_vliso(student3)
-student1.vrezat_vliso(student4)
-student1.vrezat_vliso(student5)
+logger = logging.getLogger(__name__)
+
+
+def main():
+    updater = Updater(token = TOKEN)
+    dispatcher: Dispatcher = updater.dispatcher
+
+    start_handler = CommandHandler('start', do_start)
+    echo_handler = MessageHandler(Filters.text, do_echo)
+    keyboard_handler = CommandHandler('keyboard', do_keyboard)
+    weather_handler = CommandHandler("Weather", do_weather)
+
+    dispatcher.add_handler(start_handler)
+    dispatcher.add_handler(keyboard_handler)
+    dispatcher.add_handler(weather_handler)
+    dispatcher.add_handler(echo_handler)
+
+    updater.start_polling()
+    logging.info(updater.bot.getMe())
+    updater.idle()
+
+
+def do_echo(update: Update, context: CallbackContext):
+    user_id = update.message.from_user.id
+    name = update.message.from_user.name
+    text = update.message.text
+
+    logging.info(f"{name=} {user_id=} вызвал функцию echo")
+    answer = f"Твой {user_id=}\nТвой {name=}\nТы написал {text=}"
+    update.message.reply_text(answer)
+
+
+def do_start(update: Update, context: CallbackContext):
+    user_id = update.message.from_user.id
+    logger.info(f'{user_id=} Bызвaл функцию start')
+    text = ("Приветствую тебя, кожаный мешок!\n"
+            f"Tвoй {user_id=}\nЯ знаю команды /start и /keyboard")
+
+
+    update.message.reply_text(text)
+
+
+def do_keyboard(update: Update, context: CallbackContext):
+    buttons = [
+        ["Раз", "Два"],
+        ["Три", "Четыре"],
+        ["Weather"]
+    ]
+    user_id = update.message.from_user.id
+    logger.info(f"{user_id=} Bызвaл функцию keyboard")
+    text = "Жмякните на кнопочку ><"
+    keyboard = ReplyKeyboardMarkup(buttons)
+    update.message.reply_text(text, reply_markup=keyboard)
+
+
+def do_weather(update: Update, context: CallbackContext):
+    user_id = update.message.from_user.id
+    logger.info(f'{user_id=} Bызвaл функцию Weather')
+    text = "Сейчас в Москве солнечно, но возможно я вру :)"
+
+    update.message.reply_text(text)
+
+
+
+if __name__ == "__main__":
+    main()
