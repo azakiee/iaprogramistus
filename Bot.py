@@ -17,9 +17,11 @@ def main():
     start_handler = CommandHandler('start', do_start)
     echo_handler = MessageHandler(Filters.text, do_echo)
     keyboard_handler = CommandHandler('keyboard', do_keyboard)
+    weather_handler = CommandHandler("Weather", do_weather)
 
     dispatcher.add_handler(start_handler)
     dispatcher.add_handler(keyboard_handler)
+    dispatcher.add_handler(weather_handler)
     dispatcher.add_handler(echo_handler)
 
     updater.start_polling()
@@ -51,13 +53,22 @@ def do_keyboard(update: Update, context: CallbackContext):
     buttons = [
         ["Раз", "Два"],
         ["Три", "Четыре"],
-        ["Погода в Москве"]
+        ["Weather"]
     ]
     user_id = update.message.from_user.id
     logger.info(f"{user_id=} Bызвaл функцию keyboard")
     text = "Жмякните на кнопочку ><"
     keyboard = ReplyKeyboardMarkup(buttons)
     update.message.reply_text(text, reply_markup=keyboard)
+
+
+def do_weather(update: Update, context: CallbackContext):
+    user_id = update.message.from_user.id
+    logger.info(f'{user_id=} Bызвaл функцию Weather')
+    text = "Сейчас в Москве солнечно, но возможно я вру :)"
+
+    update.message.reply_text(text)
+
 
 
 if __name__ == "__main__":
