@@ -1,8 +1,8 @@
 import logging
-from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove, ParseMode
 from telegram.ext import Updater, CallbackContext, Filters, Dispatcher, MessageHandler, CommandHandler
 from telegram.ext import CallbackQueryHandler
-from set import TOKEN
+from key import TOKEN
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -19,6 +19,7 @@ def main():
     keyboard_handler = CommandHandler('keyboard', do_keyboard)
     inline_keyboard_handler = CommandHandler('keyboard_inline', do_inline_keyboard)
     weather_handler = MessageHandler(Filters.text("weather"), do_weather)
+    callback_handler = CallbackQueryHandler(keyboard_react)
     echo_handler = MessageHandler(Filters.text, do_echo)
     unknown_handler = MessageHandler(Filters.command, unknown)
 
@@ -26,6 +27,7 @@ def main():
     dispatcher.add_handler(keyboard_handler)
     dispatcher.add_handler(inline_keyboard_handler)
     dispatcher.add_handler(weather_handler)
+    dispatcher.add_handler(callback_handler)
     dispatcher.add_handler(unknown_handler)
     dispatcher.add_handler(echo_handler)
 
@@ -47,11 +49,20 @@ def do_echo(update: Update, context: CallbackContext):
 
 def do_start(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
+    name = update.message.from_user.name
     logger.info(f'{user_id=} Bызвaл функцию start')
-    text = ("Салямалейкум!\n"
-            f"Я знаю твой {user_id=} :| \nЯ знаю команды /start и /keyboard и /keyboard_inline")
+    text = ("Салямалейкум!",
+            f"Я знаю твой id: <code><b>{user_id}</b></code> -_-",
+            f"Я знаю команды: ",
+            f"<i>/start</i>",
+            f"<i>/keyboard</i>",
+            f"<i>/keyboard_inline</i>",
+            f'<code>{name}</code> а остальное в разработке :3',
+            "P.S: <i>что бы скопировать свой</i> <b>id</b>, <b>имя</b><i>, нажми на них.</i>"
+            )
 
-    update.message.reply_text(text, reply_markup=ReplyKeyboardRemove())
+    text = '\n'.join(text)
+    update.message.reply_text(text, parse_mode=ParseMode.HTML, reply_markup=ReplyKeyboardRemove())
 
 
 def do_keyboard(update: Update, context: CallbackContext):
@@ -84,6 +95,26 @@ def do_inline_keyboard(update: Update, context: CallbackContext):
         reply_markup=keyboard
     )
 
+def keyboard_react(update: Update, context: CallbackContext):
+    query = update.callback_query
+    user_id = update.effective_user.id
+    logger.info(f'{user_id=} вызвал функцию keyboard_react')
+    buttons = [
+        ['Раз', 'Два'],
+        ['Три', 'Четыре'],
+        ['weather']
+    ]
+    for row in buttons:
+        if query.data in row:
+            row.pop(row.index(query.data))
+    keyboard_buttons = [[InlineKeyboardButton(text=text, callback_data=text) for text in row] for row in buttons]
+    keyboard = InlineKeyboardMarkup(keyboard_buttons)
+    text = 'Выбери другую опцию на клавиатуре'
+    query.edit_message_text(
+        text,
+        reply_markup=keyboard
+    )
+
 
 def do_weather(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
@@ -95,7 +126,7 @@ def do_weather(update: Update, context: CallbackContext):
 
 def unknown(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id,
-                             text = "Друже, что это?")
+                             text = "Друже, я такого не знаю?")
 
 
 if __name__ == "__main__":
