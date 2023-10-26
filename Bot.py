@@ -19,6 +19,8 @@ def main():
     keyboard_handler = CommandHandler('keyboard', do_keyboard)
     inline_keyboard_handler = CommandHandler('keyboard_inline', do_inline_keyboard)
     weather_handler = MessageHandler(Filters.text("weather"), do_weather)
+    set_timer_handler = CommandHandler('set', set_timer)
+    stop_timer_handler = CommandHandler('stop', stop_timer)
     callback_handler = CallbackQueryHandler(keyboard_react)
     echo_handler = MessageHandler(Filters.text, do_echo)
     unknown_handler = MessageHandler(Filters.command, unknown)
@@ -26,6 +28,8 @@ def main():
     dispatcher.add_handler(start_handler)
     dispatcher.add_handler(keyboard_handler)
     dispatcher.add_handler(inline_keyboard_handler)
+    dispatcher.add_handler(stop_timer_handler)
+    dispatcher.add_handler(set_timer_handler)
     dispatcher.add_handler(weather_handler)
     dispatcher.add_handler(callback_handler)
     dispatcher.add_handler(unknown_handler)
@@ -57,6 +61,7 @@ def do_start(update: Update, context: CallbackContext):
             f"<i>/start</i>",
             f"<i>/keyboard</i>",
             f"<i>/keyboard_inline</i>",
+            f"<i>/set</i>",
             f'<code>{name}</code> а остальное в разработке :3',
             "P.S: <i>что бы скопировать свой</i> <b>id</b>, <b>имя</b><i>, нажми на них.</i>"
             )
@@ -95,6 +100,7 @@ def do_inline_keyboard(update: Update, context: CallbackContext):
         reply_markup=keyboard
     )
 
+
 def keyboard_react(update: Update, context: CallbackContext):
     query = update.callback_query
     user_id = update.effective_user.id
@@ -122,6 +128,32 @@ def do_weather(update: Update, context: CallbackContext):
     text = "Сейчас в Москве солнечно, но возможно я вру :)"
 
     update.message.reply_text(text, reply_markup=ReplyKeyboardRemove())
+
+
+def set_timer(update: Update, context: CallbackContext):
+    user_id = update.effective_user.id
+    context.bot_data["user_id"] = user_id
+    context.bot_data["timer"] = 0
+    context.job_queue.run_repeating(show_seconds, 1)
+
+
+def show_seconds(context: CallbackContext):
+    logger.info(f"{context.job_queue.jobs()}")
+    user_id = context.bot_data['user_id']
+    timer = context.bot_data["timer"] + 1
+    context.bot.send_message(user_id, f'Прошло {timer} секунд')
+    context.bot_data["timer"] = timer
+
+
+def stop_timer(context, update):
+    user_id = update.message.from_user.id
+    logger.info(f'{user_id=} Bызвaл функцию Stop_timer')
+    timer = context.bot_data["timer"]
+    for job in context.job_queue.jobs():
+        job.schedule.removal()
+    update.message.reply_text(f"timer остановлен, прошло {timer} секунд")
+
+
 
 
 def unknown(update, context):
