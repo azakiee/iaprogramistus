@@ -1,9 +1,13 @@
 import logging
-from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove, ParseMode
+from typing import List
+
+from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove, ParseMode, InlineKeyboardButton
 from telegram.ext import Updater, CallbackContext, Filters, Dispatcher, MessageHandler, CommandHandler
 from telegram.ext import CallbackQueryHandler
 from key import TOKEN
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
+import datetime
+import requests
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -12,13 +16,17 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    updater = Updater(token = TOKEN)
+    updater = Updater(token=TOKEN)
     dispatcher: Dispatcher = updater.dispatcher
 
     start_handler = CommandHandler('start', do_start)
     keyboard_handler = CommandHandler('keyboard', do_keyboard)
     inline_keyboard_handler = CommandHandler('keyboard_inline', do_inline_keyboard)
     weather_handler = MessageHandler(Filters.text("weather"), do_weather)
+    do_one_handler = MessageHandler(Filters.text("Раз"), do_one)
+    do_two_handler = MessageHandler(Filters.text("Два"), do_two)
+    get_cat_handler = CommandHandler("get_cat", get_cat)
+    get_dog_handler = CommandHandler("get_dog", get_dog)
     set_timer_handler = CommandHandler('set', set_timer)
     stop_timer_handler = CommandHandler('stop', stop_timer)
     callback_handler = CallbackQueryHandler(keyboard_react)
@@ -27,9 +35,13 @@ def main():
 
     dispatcher.add_handler(start_handler)
     dispatcher.add_handler(keyboard_handler)
+    dispatcher.add_handler(get_cat_handler)
+    dispatcher.add_handler(get_dog_handler)
     dispatcher.add_handler(inline_keyboard_handler)
     dispatcher.add_handler(stop_timer_handler)
     dispatcher.add_handler(set_timer_handler)
+    dispatcher.add_handler(do_one_handler)
+    dispatcher.add_handler(do_two_handler)
     dispatcher.add_handler(weather_handler)
     dispatcher.add_handler(callback_handler)
     dispatcher.add_handler(unknown_handler)
@@ -62,6 +74,9 @@ def do_start(update: Update, context: CallbackContext):
             f"<i>/keyboard</i>",
             f"<i>/keyboard_inline</i>",
             f"<i>/set</i>",
+            f"<i>/stop</i>",
+            f"<i>/get_cat</i>",
+            f"<i>/get_dog</i>",
             f'<code>{name}</code> а остальное в разработке :3',
             "P.S: <i>что бы скопировать свой</i> <b>id</b>, <b>имя</b><i>, нажми на них.</i>"
             )
@@ -70,11 +85,64 @@ def do_start(update: Update, context: CallbackContext):
     update.message.reply_text(text, parse_mode=ParseMode.HTML, reply_markup=ReplyKeyboardRemove())
 
 
+ERROR_MESSAGE = 'Ошибка при запросе к основному API: {error}'
+URL = 'https://api.thecatapi.com/v1/images/search'
+DOGS_URL = 'https://api.thedogapi.com/v1/images/search'
+RESPONSE_USERNAME = 'Картинку {image_name} запросил: {username}, {name}'
+
+
+def get_new_image():
+    try:
+        response = requests.get(URL)
+    except Exception as error:
+        logging.error(ERROR_MESSAGE.format(error=error))
+        new_url = DOGS_URL
+        response = requests.get(new_url)
+
+    response = response.json()
+    random_cat = response[0].get('url')
+    return random_cat
+
+
+def get_cat(update, context):
+    chat = update.effective_chat
+    logging.info(RESPONSE_USERNAME.format(
+        image_name='коти',
+        username=chat.username,
+        name=chat.first_name
+    ))
+    context.bot.send_photo(chat.id, get_new_image(), reply_markup=ReplyKeyboardRemove())
+
+
+def get_new_image2():
+    try:
+        response = requests.get(DOGS_URL)
+    except Exception as error:
+        logging.error(ERROR_MESSAGE.format(error=error))
+        new_url = URL
+        response = requests.get(new_url)
+
+    response = response.json()
+    random_dog = response[0].get('url')
+    return random_dog
+
+
+def get_dog(update, context):
+    chat = update.effective_chat
+    logging.info(RESPONSE_USERNAME.format(
+        image_name='пес',
+        username=chat.username,
+        name=chat.first_name
+    ))
+    context.bot.send_photo(chat.id, get_new_image2(), reply_markup=ReplyKeyboardRemove())
+
+
 def do_keyboard(update: Update, context: CallbackContext):
     buttons = [
-        ["Раз", "Два"],
-        ["Три", "Четыре"],
-        ["weather"]
+        ['/set', 'weather'],
+        ['/get_cat', '/get_dog'],
+        ['/stop'],
+        ['Раз', 'Два'],
     ]
     user_id = update.message.from_user.id
     logger.info(f"{user_id=} Bызвaл функцию keyboard")
@@ -85,80 +153,107 @@ def do_keyboard(update: Update, context: CallbackContext):
 
 def do_inline_keyboard(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
-    logger.info(f"{user_id=} Bызвaл функцию do_inline_keyboard")
+    logger.info(f'{user_id=} вызвал функцию do_inline_keyboard')
     buttons = [
-        ["Раз", "Два"],
-        ["Три", "Четыре"],
-        ["weather"]
+        ['set', 'weather'],
+        ['get_cat', 'get_dog'],
+        ['stop'],
+        ['Раз', 'Два']
     ]
-    keyboard_button = [[InlineKeyboardButton(text=text, callback_data=text) for text in row] for row in buttons]
-    keyboard = InlineKeyboardMarkup(keyboard_button)
-    logger.info(f"Создана клавиатура {keyboard}")
-    text = "Выбери одну из кнопок на клавиатуре"
+    keyboard_buttons = [[InlineKeyboardButton(text=text, callback_data=text) for text in row] for row in buttons]
+    keyboard = InlineKeyboardMarkup(keyboard_buttons)
+    logger.info(f'Создана клавиатура {keyboard}')
+    text = 'Выбери одну из опций на клавиатуре'
     update.message.reply_text(
         text,
         reply_markup=keyboard
     )
+    logger.info(f'Ответ у пользователя')
 
 
 def keyboard_react(update: Update, context: CallbackContext):
     query = update.callback_query
+    chat_id = update.effective_chat.id
     user_id = update.effective_user.id
     logger.info(f'{user_id=} вызвал функцию keyboard_react')
-    buttons = [
-        ['Раз', 'Два'],
-        ['Три', 'Четыре'],
-        ['weather']
-    ]
-    for row in buttons:
-        if query.data in row:
-            row.pop(row.index(query.data))
-    keyboard_buttons = [[InlineKeyboardButton(text=text, callback_data=text) for text in row] for row in buttons]
-    keyboard = InlineKeyboardMarkup(keyboard_buttons)
-    text = 'Выбери другую опцию на клавиатуре'
-    query.edit_message_text(
-        text,
-        reply_markup=keyboard
-    )
+    if query.data == 'get_cat':
+        get_cat(update, context)
+    if query.data == 'get_dog':
+        get_dog(update, context)
+    if query.data == 'weather':
+        do_weather(update, context)
+    if query.data == 'set':
+        set_timer(update, context)
+    if query.data == 'stop':
+        stop_timer(update, context)
+    if query.data == 'Раз':
+        do_one(update, context)
+    if query.data == 'Два':
+        do_two(update, context)
+    text = query.data
+    query.bot.send_message(
+        chat_id,
+        reply_markup=ReplyKeyboardRemove())
 
 
 def do_weather(update: Update, context: CallbackContext):
-    user_id = update.message.from_user.id
+    user_id = update.effective_chat.id
     logger.info(f'{user_id=} Bызвaл функцию Weather')
-    text = "Сейчас в Москве солнечно, но возможно я вру :)"
+    text = "Сейчас в Москве солнечно, но лучше просто посмотри в окно :)"
 
-    update.message.reply_text(text, reply_markup=ReplyKeyboardRemove())
+    context.bot.send_message(update.effective_chat.id, text, reply_markup=ReplyKeyboardRemove())
+
+
+def do_one(update: Update, context: CallbackContext):
+    user_id = update.effective_chat.id
+    name = update.effective_user.name
+    logger.info(f'{user_id=} Bызвaл функцию do_one')
+    text = f"Два-_- \n {name} Можно и нормальные кнопки нажать..."
+
+    context.bot.send_message(update.effective_chat.id, text, reply_markup=ReplyKeyboardRemove())
+
+
+def do_two(update: Update, context: CallbackContext):
+    user_id = update.effective_chat.id
+    name = update.effective_user.name
+    logger.info(f'{user_id=} Bызвaл функцию do_two')
+    text = f"Три :/ \n {name} Можно и нормальные кнопки нажать..."
+
+    context.bot.send_message(update.effective_chat.id, text, reply_markup=ReplyKeyboardRemove())
 
 
 def set_timer(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
-    context.bot_data["user_id"] = user_id
-    context.bot_data["timer"] = 0
-    context.job_queue.run_repeating(show_seconds, 1)
+    context.bot_data['user_id'] = user_id
+    context.bot_data['timer'] = datetime.datetime.now()
+    context.bot_data['timer_job'] = context.job_queue.run_repeating(show_seconds, 1)
 
 
 def show_seconds(context: CallbackContext):
-    logger.info(f"{context.job_queue.jobs()}")
+    logger.info(f'{context.job_queue.jobs()}')
+    message_id = context.bot_data.get('message_id', None)
     user_id = context.bot_data['user_id']
-    timer = context.bot_data["timer"] + 1
-    context.bot.send_message(user_id, f'Прошло {timer} секунд')
-    context.bot_data["timer"] = timer
+    timer = datetime.datetime.now() - context.bot_data['timer']
+    timer = timer.seconds
+    text = f'прошло {timer} секунд'
+    text += '\nнажмите /stop чтобы остановить таймер'
+    if not message_id:
+        message = context.bot.send_message(user_id, text)
+        context.bot_data['message_id'] = message.message_id
+    else:
+        context.bot.edit_message_text(text, chat_id=user_id, message_id=message_id)
 
 
-def stop_timer(context, update):
-    user_id = update.message.from_user.id
-    logger.info(f'{user_id=} Bызвaл функцию Stop_timer')
-    timer = context.bot_data["timer"]
-    for job in context.job_queue.jobs():
-        job.schedule.removal()
-    update.message.reply_text(f"timer остановлен, прошло {timer} секунд")
-
-
+def stop_timer(update: Update, context: CallbackContext):
+    logger.info(f'Запущена функция delete_timer')
+    timer = datetime.datetime.now() - context.bot_data['timer']
+    context.bot_data['timer_job'].schedule_removal()
+    context.bot.send_message(update.effective_chat.id, f'Таймер остановлен. Прошло {timer} секунд')
 
 
 def unknown(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id,
-                             text = "Друже, я такого не знаю?")
+                             text="Друже, я такого не знаю")
 
 
 if __name__ == "__main__":
