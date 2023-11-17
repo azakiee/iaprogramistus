@@ -8,6 +8,7 @@ from key import TOKEN
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 import datetime
 import requests
+from FSM import register_handler, register
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -34,6 +35,7 @@ def main():
     unknown_handler = MessageHandler(Filters.command, unknown)
 
     dispatcher.add_handler(start_handler)
+    dispatcher.add_handler(register_handler)
     dispatcher.add_handler(keyboard_handler)
     dispatcher.add_handler(get_cat_handler)
     dispatcher.add_handler(get_dog_handler)
@@ -76,6 +78,7 @@ def do_start(update: Update, context: CallbackContext):
             f"<i>/set</i>",
             f"<i>/stop</i>",
             f"<i>/get_cat</i>",
+            f"<i>/register</i>",
             f"<i>/get_dog</i>",
             f'<code>{name}</code> а остальное в разработке :3',
             "P.S: <i>что бы скопировать свой</i> <b>id</b>, <b>имя</b><i>, нажми на них.</i>"
@@ -141,7 +144,7 @@ def do_keyboard(update: Update, context: CallbackContext):
     buttons = [
         ['/set', 'weather'],
         ['/get_cat', '/get_dog'],
-        ['/stop'],
+        ['/stop', '/register'],
         ['Раз', 'Два'],
     ]
     user_id = update.message.from_user.id
@@ -157,7 +160,7 @@ def do_inline_keyboard(update: Update, context: CallbackContext):
     buttons = [
         ['set', 'weather'],
         ['get_cat', 'get_dog'],
-        ['stop'],
+        ['stop', 'register'],
         ['Раз', 'Два']
     ]
     keyboard_buttons = [[InlineKeyboardButton(text=text, callback_data=text) for text in row] for row in buttons]
@@ -190,6 +193,8 @@ def keyboard_react(update: Update, context: CallbackContext):
         do_one(update, context)
     if query.data == 'Два':
         do_two(update, context)
+    if query.data == 'register':
+        register(update, context)
     text = query.data
     query.bot.send_message(
         chat_id,
