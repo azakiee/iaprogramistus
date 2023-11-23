@@ -17,7 +17,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 
-WAIT_NAME, WAIT_SURNAME, WAIT_BIRTHDAY = range(3)
+WAIT_NAME, WAIT_SURNAME, WAIT_BIRTHDAY, WAIT_SEX, WAIT_GRADE = range(5)
 
 
 def ask_name(update: Update, context: CallbackContext):
@@ -99,6 +99,60 @@ def get_birthday(update: Update, context: CallbackContext):
     answer = '\n'.join(answer)
     update.message.reply_text(answer)
 
+    return ask_sex(update, context)
+
+
+def ask_sex(update: Update, context: CallbackContext):
+    user_id = update.message.from_user.id
+    username = update.message.from_user.username
+    logger.info(f'{username=} {user_id=} вызвал функцию ask_sex')
+    answer = [
+        f'Назови свой пол'
+    ]
+    answer = '\n'.join(answer)
+    update.message.reply_text(answer)
+
+    return WAIT_SEX
+
+
+def get_sex(update: Update, context: CallbackContext):
+    user_id = update.message.from_user.id
+    username = update.message.from_user.username
+    text = update.message.text
+    logger.info(f'{username=} {user_id=} вызвал функцию get_sex')
+    answer = [
+        f'Твой пол - {text}'
+    ]
+    answer = '\n'.join(answer)
+    update.message.reply_text(answer)
+
+    return ask_grade(update, context)
+
+
+def ask_grade(update: Update, context: CallbackContext):
+    user_id = update.message.from_user.id
+    username = update.message.from_user.username
+    logger.info(f'{username=} {user_id=} вызвал функцию ask_grade')
+    answer = [
+        f'Назови свой класс'
+    ]
+    answer = '\n'.join(answer)
+    update.message.reply_text(answer)
+
+    return WAIT_GRADE
+
+
+def get_grade(update: Update, context: CallbackContext):
+    user_id = update.message.from_user.id
+    username = update.message.from_user.username
+    text = update.message.text
+    logger.info(f'{username=} {user_id=} вызвал функцию get_grade')
+    answer = [
+        f'Твой класс - {text}'
+    ]
+    answer = '\n'.join(answer)
+    update.message.reply_text(answer)
+
     return register(update, context)
 
 
@@ -122,6 +176,8 @@ register_handler = ConversationHandler(
         WAIT_NAME: [MessageHandler(Filters.text, get_name)],
         WAIT_SURNAME: [MessageHandler(Filters.text, get_surname)],
         WAIT_BIRTHDAY: [MessageHandler(Filters.text, get_birthday)],
+        WAIT_SEX: [MessageHandler(Filters.text, get_sex)],
+        WAIT_GRADE: [MessageHandler(Filters.text, get_grade)]
     },
     fallbacks=[]
 )
