@@ -9,7 +9,7 @@ from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 import datetime
 import requests
 from telegram.ext import ConversationHandler
-
+from db import write_to_db, find_user_by_id
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -18,6 +18,27 @@ logger = logging.getLogger(__name__)
 
 
 WAIT_NAME, WAIT_SURNAME, WAIT_BIRTHDAY, WAIT_SEX, WAIT_GRADE = range(5)
+
+
+def check_register(update: Update, context: CallbackContext):
+    user_id = update.message.from_user.id
+    username = update.message.from_user.username
+    logger.info(f'{username=} {user_id=} вызвал функцию check_register')
+    user = find_user_by_id(user_id)
+    if not user:
+        return ask_name(update, context)
+    return get_yes_no(update, context)
+
+    answer = [f"Привет"
+              f"Ты уже зареган!"]
+
+
+def ask_yes_no(update: Update, context: CallbackContext):
+    pass
+
+
+def get_yes_no(update: Update, context: CallbackContext):
+    pass
 
 
 def ask_name(update: Update, context: CallbackContext):
@@ -38,6 +59,7 @@ def get_name(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
     username = update.message.from_user.username
     text = update.message.text
+    context.user_data['name'] = text
     logger.info(f'{username=} {user_id=} вызвал функцию get_name')
     answer = [
         f'Твое имя - {text}'
@@ -65,6 +87,7 @@ def get_surname(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
     username = update.message.from_user.username
     text = update.message.text
+    context.user_data['surname'] = text
     logger.info(f'{username=} {user_id=} вызвал функцию get_surname')
     answer = [
         f'Твоя фамилия - {text}'
@@ -92,6 +115,7 @@ def get_birthday(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
     username = update.message.from_user.username
     text = update.message.text
+    context.user_data['birthday'] = text
     logger.info(f'{username=} {user_id=} вызвал функцию get_birthday')
     answer = [
         f'Твоя дата рождения - {text}'
@@ -119,6 +143,7 @@ def get_sex(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
     username = update.message.from_user.username
     text = update.message.text
+    context.user_data['sex'] = text
     logger.info(f'{username=} {user_id=} вызвал функцию get_sex')
     answer = [
         f'Твой пол - {text}'
@@ -146,6 +171,7 @@ def get_grade(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
     username = update.message.from_user.username
     text = update.message.text
+    context.user_data['grade'] = text
     logger.info(f'{username=} {user_id=} вызвал функцию get_grade')
     answer = [
         f'Твой класс - {text}'
@@ -160,6 +186,12 @@ def register(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
     username = update.message.from_user.username
     logger.info(f'{username=} {user_id=} вызвал функцию register')
+    name = context.user_data['name']
+    surname = context.user_data['surname']
+    birthday = context.user_data['birthday']
+    sex = context.user_data['sex']
+    grade = context.user_data['grade']
+    write_to_db(user_id, name, surname, birthday, sex, grade)
     answer = [
         f'Привет!',
         f'Ты зареган!'

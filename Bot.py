@@ -1,5 +1,4 @@
 import logging
-from typing import List
 
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove, ParseMode, InlineKeyboardButton
 from telegram.ext import Updater, CallbackContext, Filters, Dispatcher, MessageHandler, CommandHandler
