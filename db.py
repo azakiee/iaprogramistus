@@ -19,7 +19,7 @@ def write_to_db(userid, name, surname, birthday, sex, grade):
         file.write(sex)
         file.write("\t")
         file.write(grade)
-        file.write("\t")
+        file.write("\n")
 
 
 def find_user_by_id(userid):

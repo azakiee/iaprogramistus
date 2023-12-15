@@ -194,10 +194,6 @@ def keyboard_react(update: Update, context: CallbackContext):
         do_two(update, context)
     if query.data == 'register':
         register(update, context)
-    text = query.data
-    query.bot.send_message(
-        chat_id,
-        reply_markup=ReplyKeyboardRemove())
 
 
 def do_weather(update: Update, context: CallbackContext):
