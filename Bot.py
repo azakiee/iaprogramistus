@@ -175,7 +175,6 @@ def do_inline_keyboard(update: Update, context: CallbackContext):
 
 def keyboard_react(update: Update, context: CallbackContext):
     query = update.callback_query
-    chat_id = update.effective_chat.id
     user_id = update.effective_user.id
     logger.info(f'{user_id=} вызвал функцию keyboard_react')
     if query.data == 'get_cat':

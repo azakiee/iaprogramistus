@@ -44,8 +44,8 @@ def check_register(update: Update, context: CallbackContext):
 
 
 def get_yes_no(update: Update, context: CallbackContext):
-    user_id = update.message.from_user.id
-    username = update.message.from_user.username
+    user_id = update.effective_chat.id
+    username = update.effective_chat.username
     logger.info(f'{username=} {user_id=} вызвал функцию get_yes_no')
     query = update.callback_query
     if query.data == 'Да':
@@ -54,15 +54,15 @@ def get_yes_no(update: Update, context: CallbackContext):
 
 
 def ask_name(update: Update, context: CallbackContext):
-    user_id = update.message.from_user.id
-    username = update.message.from_user.username
+    user_id = update.effective_chat.id
+    username = update.effective_chat.username
     logger.info(f'{username=} {user_id=} вызвал функцию ask_name')
     answer = [
         f'Привет!',
         f'Назови свое имя'
     ]
     answer = '\n'.join(answer)
-    update.message.reply_text(answer, reply_markup=ReplyKeyboardRemove())
+    context.bot.send_message(update.effective_chat.id, answer, reply_markup=ReplyKeyboardRemove())
 
     return WAIT_NAME
 
@@ -206,7 +206,9 @@ def register(update: Update, context: CallbackContext):
     write_to_db(user_id, name, surname, birthday, sex, grade)
     answer = [
         f'Привет!',
-        f'Ты зареган!'
+        f'Зареган!',
+        f'Твои данные:', f'Имя : {name}', f'Фамилия : {surname}', f'Дата Рождения : {birthday}', f'Пол: : {sex}',
+        f'Класс : {grade}'
     ]
     answer = '\n'.join(answer)
     update.message.reply_text(answer)
@@ -222,7 +224,7 @@ register_handler = ConversationHandler(
         WAIT_BIRTHDAY: [MessageHandler(Filters.text, get_birthday)],
         WAIT_SEX: [MessageHandler(Filters.text, get_sex)],
         WAIT_GRADE: [MessageHandler(Filters.text, get_grade)],
-        WAIT_OK: [MessageHandler(Filters.text, get_yes_no)]
+        WAIT_OK: [CallbackQueryHandler(get_yes_no)]
     },
     fallbacks=[]
 )
