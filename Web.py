@@ -1,27 +1,29 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, url_for
 
 
 app = Flask(__name__)
 
+
 @app.route("/")
 def hello():
-    return """
-    <html>
-      <head>
-        <title>BLABLABLA</title>
-      </head>
-      <body>
-        <h1>ALLOHA</h1>
-        <h2>PRIVET</h2>
-        <h3>BONJUR</h3>
-        <p>Скажи мне привет адвраыурарацу</p>
-      </body>
-    </html>    """
+    return f"""
+    <h1><a href="{url_for('index')}">Сайт</a><h1>
+"""
 
 
 @app.route("/index")
 def index():
     return render_template("index.html")
+
+
+@app.route('/day-<num>')
+def day(num):
+    return render_template(f'day-{num}.html')
+
+
+@app.route('/photo-<num>')
+def photo(num):
+    return render_template(f'photo-{num}.html')
 
 
 if __name__ == "__main__":
