@@ -8,12 +8,24 @@ app = Flask(__name__)
 def hello():
     return f"""
     <h1><a href="{url_for('index')}">Сайт</a><h1>
+    <h2><a href="{url_for('base')}">База</a><h2>
+    <h2><a href="{url_for('start')}">Старт</a><h2>
 """
 
 
 @app.route("/index")
 def index():
     return render_template("index.html")
+
+
+@app.route("/start")
+def start():
+    return render_template("start.html")
+
+
+@app.route("/base")
+def base():
+    return render_template("base.html")
 
 
 @app.route('/day-<num>')
