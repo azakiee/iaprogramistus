@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='form-style.css') }}">
+{% endblock %}
+
+{% block navigation %}
+
+<nav class="blog-navigation">
+  <a href="{{ url_for('start') }}">На главную</a>
+</nav>
+
+{% endblock %}
+
+{% block content %}
+    <h2>Авторизация</h2>
+    <p>Войдите на сайт, чтобы получить функционал</p>
+    <form class="feedback-form" action="/auth" method="post">
+        <p>
+            <label for="login">Логин:</label>
+            <input type="text" name="login" id="login">
+        </p>
+        <p>
+            <label for="password">Пароль:</label>
+            <input type="password" name="password" id="password">
+        </p>
+        <input class="btn" type="submit" value="Войти">
+    </form>
+{% endblock %}
