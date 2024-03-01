@@ -1,22 +1,22 @@
 <!DOCTYPE html>
 <html lang="ru">
+{% block head %}
   <head>
     <meta charset="utf-8">
     <title>Сайт начинающего верстальщика</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   </head>
+{% endblock %}
   <body>
     <header>
       <h1 class="page-title">Сайт начинающего верстальщика {{ username }}</h1>
       <div class="avatar-container">
         <img class="avatar" src="{{ url_for('static', filename='img/raccoon.svg') }}" width="80" height="80" alt="Аватарка">
       </div>
-      {% block navigation %}
-      {% endblock %}
+      {% block navigation %}{% endblock %}
     </header>
     <main>
-      {% block content %}
-      {% endblock %}
+      {% block content %}{% endblock %}
     </main>
     <footer>
       Подвал сайта
