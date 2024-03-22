@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block navigation %}
+
+<nav class="blog-navigation">
+  <a href="{{ url_for('start') }}">На главную</a>
+</nav>
+
+{% endblock %}
+
+{% block content %}
+<main>
+  <article>
+    <h1>День шестнадцатый. Что такое Flask?</h1>
+    <p>Flask — это упрощенная платформа Python для веб-приложений, которая обеспечивает основные возможности маршрутизации URL-адресов и визуализации страниц. Flask называют "микро"-платформой, так как она не предоставляет напрямую такие функции, как проверка форм, абстракция базы данных, проверка подлинности и т. д. Эти функции предоставляются специальными пакетами Python, называемыми расширениями Flask..</p>
+    <p>
+          <img src="{{ url_for('static', filename='files/flask.png') }}"  width="300" height="150">
+        </p>
+  </article>
+  <aside class="partnership">
+    Тут могла быть ваша реклама
+  </aside>
+</main>
+{% endblock %}
